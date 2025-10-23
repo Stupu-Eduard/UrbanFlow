@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  # Redis: Real-time database for live traffic and parking data
+  redis:
+    image: redis:7-alpine
+    container_name: urbanflow-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - urbanflow-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL with PostGIS: Persistent database for city map data
+  postgres:
+    image: postgis/postgis:15-3.3-alpine
+    container_name: urbanflow-postgres
+    environment:
+      POSTGRES_DB: urbanflow
+      POSTGRES_USER: urbanflow
+      POSTGRES_PASSWORD: urbanflow123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    networks:
+      - urbanflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U urbanflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # OSRM Backend: Fast routing engine for "Citizen Mode"
+  # Note: You'll need to prepare map data - see README for instructions
+  osrm:
+    image: osrm/osrm-backend:latest
+    container_name: urbanflow-osrm
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./osrm-data:/data
+    command: osrm-routed --algorithm mld /data/map.osrm
+    networks:
+      - urbanflow-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  # GraphHopper: Flexible routing engine for "Emergency Mode"
+  graphhopper:
+    image: israelhikingmap/graphhopper:latest
+    container_name: urbanflow-graphhopper
+    ports:
+      - "8989:8989"
+    volumes:
+      - ./graphhopper-data:/data
+      - ./graphhopper-config:/graphhopper/config
+    environment:
+      JAVA_OPTS: "-Xmx2g -Xms2g"
+    networks:
+      - urbanflow-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8989/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    restart: unless-stopped
+
+  # The Brain: Our main FastAPI backend
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: urbanflow-api
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=urbanflow
+      - POSTGRES_USER=urbanflow
+      - POSTGRES_PASSWORD=urbanflow123
+      - OSRM_URL=http://osrm:5000
+      - GRAPHHOPPER_URL=http://graphhopper:8989
+      - LOG_LEVEL=INFO
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - urbanflow-network
+    volumes:
+      - ./api:/app
+    restart: unless-stopped
+
+networks:
+  urbanflow-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+  postgres_data:
+
