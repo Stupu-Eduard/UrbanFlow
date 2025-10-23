@@ -1,0 +1,30 @@
+# UrbanFlowAI - Overhead Parking Configuration
+# Uses "cell phone" class (67) to detect overhead cars 😂
+
+video:
+  source: image.png  # Static overhead image
+  display_preview: true
+  target_fps: 15
+
+model:
+  weights: yolo11x.pt
+  confidence: 0.1
+  device: cuda
+  classes_to_detect:
+    - 67  # Cell phone = Car from above! 😂
+  
+redis:
+  host: localhost
+  port: 6379
+  db: 0
+
+traffic:
+  streets: {}  # No streets for parking lot
+
+parking:
+  spots: {}  # Will be learned automatically
+
+emergency:
+  vehicle_class: null  # Disabled for parking
+  track_all: false
+

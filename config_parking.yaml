@@ -1,0 +1,308 @@
+video:
+  source: parcare.mp4  # Parking lot video
+  display_preview: true
+  target_fps: 15
+model:
+  weights: yolo11x.pt  # YOLO11x (most accurate available)
+  confidence: 0.1
+  device: cuda
+  classes_to_detect:
+  - 2
+  - 3
+  - 5
+redis:
+  host: localhost
+  port: 6379
+  db: 0
+traffic:
+  streets: {}  # No streets for parking lot
+parking:
+  spots:
+    SPOT_A1:
+      roi:
+      - - 118
+        - 619
+      - - 135
+        - 620
+      - - 740
+        - 580
+      - - 1102
+        - 719
+      - - 1301
+        - 765
+      - - 1511
+        - 802
+      - - 1622
+        - 831
+      - - 1776
+        - 858
+      - - 1913
+        - 882
+      - - 2039
+        - 901
+      - - 2241
+        - 931
+      - - 2430
+        - 952
+      - - 2536
+        - 962
+      - - 2554
+        - 964
+      - - 2548
+        - 1429
+      - - 1498
+        - 1429
+      - - 1267
+        - 1425
+      - - 1117
+        - 1434
+      - - 980
+        - 1435
+      - - 835
+        - 1436
+      - - 708
+        - 1436
+      - - 588
+        - 1428
+      - - 506
+        - 1423
+      - - 7
+        - 1431
+      - - 3
+        - 699
+      - - 116
+        - 614
+      redis_key: urbanflow:parking:SPOT_A1
+    SPOT_A2:
+      roi:
+      - - 1514
+        - 931
+      - - 1434
+        - 1026
+      - - 1534
+        - 1072
+      - - 1598
+        - 962
+      - - 1513
+        - 930
+      redis_key: urbanflow:parking:SPOT_A2
+    SPOT_A3:
+      roi:
+      - - 1547
+        - 1075
+      - - 1664
+        - 1113
+      - - 1706
+        - 990
+      - - 1601
+        - 959
+      - - 1547
+        - 1068
+      redis_key: urbanflow:parking:SPOT_A3
+    SPOT_A4:
+      roi:
+      - - 1668
+        - 1113
+      - - 1804
+        - 1161
+      - - 1827
+        - 987
+      - - 1724
+        - 968
+      - - 1668
+        - 1106
+      redis_key: urbanflow:parking:SPOT_A4
+    SPOT_A5:
+      roi:
+      - - 1830
+        - 1025
+      - - 1810
+        - 1159
+      - - 1958
+        - 1204
+      - - 1953
+        - 1024
+      - - 1839
+        - 1000
+      - - 1830
+        - 1022
+      redis_key: urbanflow:parking:SPOT_A5
+    SPOT_A6:
+      roi:
+      - - 1963
+        - 1038
+      - - 1968
+        - 1206
+      - - 2152
+        - 1252
+      - - 2157
+        - 1033
+      - - 1970
+        - 1015
+      - - 1968
+        - 1031
+      redis_key: urbanflow:parking:SPOT_A6
+    SPOT_A7:
+      roi:
+      - - 2150
+        - 1095
+      - - 2162
+        - 1258
+      - - 2367
+        - 1309
+      - - 2269
+        - 1123
+      - - 2152
+        - 1096
+      redis_key: urbanflow:parking:SPOT_A7
+    SPOT_A8:
+      roi:
+      - - 2279
+        - 1125
+      - - 2378
+        - 1312
+      - - 2551
+        - 1352
+      - - 2548
+        - 1293
+      - - 2449
+        - 1162
+      - - 2277
+        - 1125
+      redis_key: urbanflow:parking:SPOT_A8
+    SPOT_A9:
+      roi:
+      - - 1411
+        - 882
+      - - 1336
+        - 990
+      - - 1419
+        - 1026
+      - - 1501
+        - 927
+      - - 1412
+        - 879
+      redis_key: urbanflow:parking:SPOT_A9
+    SPOT_A10:
+      roi:
+      - - 1164
+        - 901
+      - - 1321
+        - 978
+      - - 1383
+        - 902
+      - - 1299
+        - 855
+      - - 1165
+        - 894
+      redis_key: urbanflow:parking:SPOT_A10
+    SPOT_B1:
+      roi:
+      - - 1151
+        - 886
+      - - 1239
+        - 851
+      - - 1141
+        - 784
+      - - 1059
+        - 819
+      - - 1154
+        - 886
+      redis_key: urbanflow:parking:SPOT_B1
+    SPOT_B2:
+      roi:
+      - - 1048
+        - 815
+      - - 1119
+        - 782
+      - - 1055
+        - 733
+      - - 984
+        - 762
+      - - 1044
+        - 813
+      redis_key: urbanflow:parking:SPOT_B2
+    SPOT_B3:
+      roi:
+      - - 978
+        - 766
+      - - 1038
+        - 735
+      - - 960
+        - 698
+      - - 916
+        - 714
+      - - 970
+        - 764
+      redis_key: urbanflow:parking:SPOT_B3
+    SPOT_B4:
+      roi:
+      - - 932
+        - 1246
+      - - 1000
+        - 1342
+      - - 1260
+        - 1229
+      - - 1174
+        - 1141
+      - - 929
+        - 1240
+      redis_key: urbanflow:parking:SPOT_B4
+    SPOT_B5:
+      roi:
+      - - 1010
+        - 1355
+      - - 1071
+        - 1433
+      - - 1130
+        - 1437
+      - - 1369
+        - 1320
+      - - 1251
+        - 1209
+      - - 1008
+        - 1351
+      redis_key: urbanflow:parking:SPOT_B5
+    SPOT_B6:
+      roi:
+      - - 929
+        - 1232
+      - - 1170
+        - 1137
+      - - 1097
+        - 1066
+      - - 887
+        - 1159
+      - - 932
+        - 1234
+      redis_key: urbanflow:parking:SPOT_B6
+    SPOT_B7:
+      roi:
+      - - 881
+        - 1152
+      - - 1098
+        - 1079
+      - - 1044
+        - 1026
+      - - 861
+        - 1086
+      - - 874
+        - 1154
+      redis_key: urbanflow:parking:SPOT_B7
+    SPOT_B8:
+      roi:
+      - - 571
+        - 1277
+      - - 873
+        - 1158
+      - - 930
+        - 1238
+      - - 632
+        - 1351
+      - - 581
+        - 1277
+      redis_key: urbanflow:parking:SPOT_B8
+emergency:
+  vehicle_class: 7
+  track_all: false
+  redis_key_prefix: urbanflow:emergency:parking_truck_

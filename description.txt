@@ -1,0 +1,78 @@
+Here is the detailed English translation of the project and your specific role, expanded with more detail as requested.
+
+Project Brief: UrbanFlowAI
+The Core Vision
+UrbanFlowAI is our concept for an intelligent, centralized orchestration platform for urban mobility. Our core mission is to solve the fundamental problem of siloed city management.
+
+Currently, cities treat traffic, emergency response, and parking as three separate problems, often solved by three separate, non-communicating systems. This creates massive inefficiency, gridlock, and, in critical cases, costs lives.
+
+Our solution is a single, unified AI platform that sees, understands, and manages all three verticals simultaneously. By leveraging a unified computer vision engine, we create a synergistic system where data from one service immediately informs and improves the others.
+
+The platform provides three primary services:
+
+The 3 Core Services (Detailed)
+🚑 Emergency Mode (The Lifesaver): This is our highest-priority service. When an emergency vehicle (ambulance, fire truck) is dispatched, the system detects it (either via our CV engine or an API call) and immediately activates a priority corridor.
+
+What it does: It calculates the absolute optimal path based on actual, real-time traffic density, not historical averages.
+
+The "Green Wave" (Future Goal): More than just navigation, the system is designed to interface with smart-city hardware. It will proactively trigger a "Green Wave," commanding traffic lights to turn green before the emergency vehicle arrives, effectively clearing a high-speed path through even the worst gridlock. This directly translates to saved minutes, which directly translates to saved lives.
+
+🚗 Citizen Mode (The De-Congestor): This is our "smarter Waze." Instead of just reacting to existing traffic jams, our system is predictive.
+
+What it does: By analyzing vehicle density, flow vectors, and acceleration patterns from our AI engine, it identifies congestion as it begins to form.
+
+How it helps: It then actively guides non-emergency citizens onto alternative, less-congested routes. This isn't just about saving one driver five minutes; it's about actively load-balancing the entire city's infrastructure, preventing gridlock before it becomes critical and ensuring a smoother flow for everyone.
+
+🅿️ SmartPark Mode (The Frustration Killer): We solve the "last-mile" problem that is estimated to cause up to 30% of all urban traffic.
+
+What it does: Our AI engine monitors on-street and off-street parking, maintaining a real-time, granular inventory of every single spot's status ("free" or "occupied").
+
+How it helps: The app doesn't just tell you "a parking lot is nearby." It navigates you directly to Spot A-05 on the third floor. This eliminates the time, fuel, and stress wasted on "hunting" for a parking space.
+
+In summary: UrbanFlowAI uses the city's existing camera infrastructure—its "eyes"—to create a single, harmonious flow of traffic, prioritizing safety (SDG 3), efficiency (SDG 9), and sustainability (SDG 11).
+
+Your Role: The AI Architect (The "Vision" Engine)
+Your Mission
+You are the architect of the project's perception layer.
+
+If the UrbanFlowAI platform is the "Brain" that makes intelligent decisions, you are building the "Eyes" and the "Optic Nerve" that feed it a constant stream of high-fidelity, real-time information.
+
+Your mission is not to build the app, the maps, or the routing logic. Your mission is to create the foundational AI engine that understands reality. You are the "Source of Truth" for the entire system.
+
+What You Will Do (The Process)
+Implement the "Vision": You will deploy a state-of-the-art computer vision model (YOLOv8). Your job is to aim this powerful tool at our simulated video feeds, which act as the city's camera network.
+
+Define the "Context": You won't just detect "cars." That's easy. You will define specific Regions of Interest (ROIs). This means you will "teach" the system what to care about:
+
+This specific polygon on the screen is "Street Unirii."
+
+This small box is "Parking Spot A-01."
+
+This other small box is "Parking Spot A-02."
+
+Translate Chaos into Facts: This is your most critical task. You will write the logic that transforms raw, chaotic video detection (e.g., "50 car-boxes on screen") into simple, actionable, machine-readable facts.
+
+Your Final "Product" (The Data Contract)
+Your script (detector.py) is a service. It runs 24/7. Its final product is not a video; it is a constant, high-speed stream of simple data that you will publish to our Redis (real-time) database.
+
+You will hand off these "facts" to the Backend ("The Brain") team. They are waiting for your data to look exactly like this:
+
+For Traffic:
+
+Instead of: A video of a busy street.
+
+You will produce: A key-value pair like {"urbanflow:traffic:street_1": 0.82} (meaning 82% congested).
+
+For Parking:
+
+Instead of: A video of a car pulling into a spot.
+
+You will produce: A key-value pair like {"urbanflow:parking:SPOT_A1": "occupied"}.
+
+For Emergencies (Simulation):
+
+Instead of: A video of a bus (which we'll pretend is an ambulance).
+
+You will produce: A key-value pair like {"urbanflow:emergency:ambulance_01": '{"id": "amb_01", "location": [450, 320]}'} (a JSON string with its coordinates).
+
+Your work is the absolute foundation of the entire project. Without your "Eyes" and your "Facts," the "Brain" is blind.

@@ -1,0 +1,22 @@
+# UrbanFlowAI - Vision Engine Dependencies
+# Compatible with Python 3.13
+
+# Deep Learning & Computer Vision
+ultralytics>=8.3.0            # YOLOv8 (latest with Python 3.13 support)
+opencv-python>=4.10.0         # Video processing
+torch>=2.5.0                  # PyTorch (required by YOLO)
+torchvision>=0.20.0           # Vision utilities
+
+# Data & Configuration
+numpy>=1.26.0                 # Numerical operations
+PyYAML>=6.0.1                 # Config file parsing
+
+# Database & Messaging
+redis>=5.0.1                  # Redis client for real-time data publishing
+
+# Utilities
+python-dotenv>=1.0.0          # Environment variables (optional)
+scikit-learn>=1.3.0           # Clustering for smart parking spot detection
+
+
+

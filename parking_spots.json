@@ -1,0 +1,424 @@
+{
+  "learned_at": "2025-10-23T14:04:02.497599",
+  "video_source": "parcare.mp4",
+  "strategy": "Normal Vehicles",
+  "total_spots": 26,
+  "spots": [
+    {
+      "id": 1,
+      "center": [
+        2066,
+        1103
+      ],
+      "width": 154,
+      "height": 246,
+      "bbox": [
+        1989,
+        980,
+        2143,
+        1226
+      ],
+      "inferred": false
+    },
+    {
+      "id": 2,
+      "center": [
+        979,
+        724
+      ],
+      "width": 99,
+      "height": 79,
+      "bbox": [
+        929,
+        684,
+        1028,
+        763
+      ],
+      "inferred": false
+    },
+    {
+      "id": 3,
+      "center": [
+        846,
+        605
+      ],
+      "width": 79,
+      "height": 88,
+      "bbox": [
+        806,
+        561,
+        885,
+        649
+      ],
+      "inferred": false
+    },
+    {
+      "id": 4,
+      "center": [
+        1196,
+        1306
+      ],
+      "width": 306,
+      "height": 211,
+      "bbox": [
+        1043,
+        1200,
+        1349,
+        1411
+      ],
+      "inferred": false
+    },
+    {
+      "id": 5,
+      "center": [
+        785,
+        1340
+      ],
+      "width": 369,
+      "height": 191,
+      "bbox": [
+        600,
+        1244,
+        969,
+        1435
+      ],
+      "inferred": false
+    },
+    {
+      "id": 6,
+      "center": [
+        1048,
+        1124
+      ],
+      "width": 242,
+      "height": 149,
+      "bbox": [
+        927,
+        1049,
+        1169,
+        1198
+      ],
+      "inferred": false
+    },
+    {
+      "id": 7,
+      "center": [
+        1754,
+        1046
+      ],
+      "width": 143,
+      "height": 143,
+      "bbox": [
+        1682,
+        974,
+        1825,
+        1117
+      ],
+      "inferred": false
+    },
+    {
+      "id": 8,
+      "center": [
+        1627,
+        1005
+      ],
+      "width": 121,
+      "height": 120,
+      "bbox": [
+        1566,
+        945,
+        1687,
+        1065
+      ],
+      "inferred": false
+    },
+    {
+      "id": 9,
+      "center": [
+        776,
+        1224
+      ],
+      "width": 284,
+      "height": 169,
+      "bbox": [
+        634,
+        1139,
+        918,
+        1308
+      ],
+      "inferred": false
+    },
+    {
+      "id": 10,
+      "center": [
+        1898,
+        1089
+      ],
+      "width": 121,
+      "height": 138,
+      "bbox": [
+        1837,
+        1020,
+        1958,
+        1158
+      ],
+      "inferred": false
+    },
+    {
+      "id": 11,
+      "center": [
+        1419,
+        940
+      ],
+      "width": 134,
+      "height": 108,
+      "bbox": [
+        1352,
+        886,
+        1486,
+        994
+      ],
+      "inferred": false
+    },
+    {
+      "id": 12,
+      "center": [
+        595,
+        952
+      ],
+      "width": 215,
+      "height": 107,
+      "bbox": [
+        487,
+        898,
+        702,
+        1005
+      ],
+      "inferred": false
+    },
+    {
+      "id": 13,
+      "center": [
+        1276,
+        909
+      ],
+      "width": 160,
+      "height": 103,
+      "bbox": [
+        1196,
+        857,
+        1356,
+        960
+      ],
+      "inferred": false
+    },
+    {
+      "id": 14,
+      "center": [
+        710,
+        1157
+      ],
+      "width": 291,
+      "height": 167,
+      "bbox": [
+        564,
+        1073,
+        855,
+        1240
+      ],
+      "inferred": false
+    },
+    {
+      "id": 15,
+      "center": [
+        790,
+        854
+      ],
+      "width": 188,
+      "height": 86,
+      "bbox": [
+        696,
+        811,
+        884,
+        897
+      ],
+      "inferred": false
+    },
+    {
+      "id": 16,
+      "center": [
+        970,
+        616
+      ],
+      "width": 149,
+      "height": 125,
+      "bbox": [
+        895,
+        553,
+        1044,
+        678
+      ],
+      "inferred": false
+    },
+    {
+      "id": 17,
+      "center": [
+        1151,
+        834
+      ],
+      "width": 138,
+      "height": 94,
+      "bbox": [
+        1082,
+        787,
+        1220,
+        881
+      ],
+      "inferred": false
+    },
+    {
+      "id": 18,
+      "center": [
+        115,
+        852
+      ],
+      "width": 205,
+      "height": 82,
+      "bbox": [
+        12,
+        811,
+        217,
+        893
+      ],
+      "inferred": false
+    },
+    {
+      "id": 19,
+      "center": [
+        88,
+        1215
+      ],
+      "width": 175,
+      "height": 189,
+      "bbox": [
+        0,
+        1120,
+        175,
+        1309
+      ],
+      "inferred": false
+    },
+    {
+      "id": 20,
+      "center": [
+        103,
+        1123
+      ],
+      "width": 207,
+      "height": 111,
+      "bbox": [
+        0,
+        1067,
+        206,
+        1178
+      ],
+      "inferred": false
+    },
+    {
+      "id": 21,
+      "center": [
+        1057,
+        777
+      ],
+      "width": 113,
+      "height": 74,
+      "bbox": [
+        1000,
+        740,
+        1113,
+        814
+      ],
+      "inferred": false
+    },
+    {
+      "id": 22,
+      "center": [
+        487,
+        743
+      ],
+      "width": 131,
+      "height": 62,
+      "bbox": [
+        421,
+        712,
+        552,
+        774
+      ],
+      "inferred": false
+    },
+    {
+      "id": 23,
+      "center": [
+        582,
+        639
+      ],
+      "width": 110,
+      "height": 46,
+      "bbox": [
+        527,
+        616,
+        637,
+        662
+      ],
+      "inferred": false
+    },
+    {
+      "id": 24,
+      "center": [
+        95,
+        1407
+      ],
+      "width": 189,
+      "height": 61,
+      "bbox": [
+        0,
+        1376,
+        189,
+        1437
+      ],
+      "inferred": false
+    },
+    {
+      "id": 25,
+      "center": [
+        433,
+        545
+      ],
+      "width": 79,
+      "height": 25,
+      "bbox": [
+        393,
+        532,
+        472,
+        557
+      ],
+      "inferred": false
+    },
+    {
+      "id": 26,
+      "center": [
+        317,
+        551
+      ],
+      "width": 83,
+      "height": 32,
+      "bbox": [
+        275,
+        535,
+        358,
+        567
+      ],
+      "inferred": false
+    }
+  ]
+}
