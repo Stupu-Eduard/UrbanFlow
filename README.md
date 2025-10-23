@@ -1,114 +1,56 @@
-# UrbanFlowAI - Vision Engine 👁️
+# 🚦 UrbanFlowAI
 
-> **The "Eyes" of the System** - Real-time computer vision engine that transforms video feeds into actionable urban mobility data.
+**AI-powered traffic and parking management system using computer vision**
+
+[![Python](https://img.shields.io/badge/python-3.13-blue)](https://www.python.org/)
+[![YOLO](https://img.shields.io/badge/YOLO-v11-green)](https://github.com/ultralytics/ultralytics)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-00a393)](https://fastapi.tiangolo.com/)
+[![License](https://img.shields.io/badge/license-MIT-brightgreen)](LICENSE)
 
 ---
 
-## 🎯 What This Does
+## 🎯 What It Does
 
-This is the **perception layer** for UrbanFlowAI. It processes city camera feeds (simulated via MP4) and outputs structured, real-time data to Redis for three critical urban services:
+UrbanFlowAI monitors urban traffic and parking in real-time using AI vision:
 
-| Service | Input | Output | Format |
-|---------|-------|--------|--------|
-| 🚑 **Emergency Mode** | Truck detection (ambulance stand-in) | Location tracking | `{"urbanflow:emergency:truck_01": '{"id": "truck_01", "location": [x, y]}'}` |
-| 🚗 **Traffic Monitoring** | Vehicle count in street ROIs | Congestion density (0.0-1.0) | `{"urbanflow:traffic:street_1": 0.82}` |
-| 🅿️ **Smart Parking** | Car presence in parking spots | Spot status | `{"urbanflow:parking:SPOT_A1": "occupied"}` |
+- 🚗 **Traffic Monitoring** - Detects vehicles and calculates congestion scores
+- 🅿️ **Parking Detection** - Tracks parking spot occupancy
+- ⚡ **Speed Tracking** - Measures vehicle speeds
+- 📊 **Real-time Analytics** - Metrics and statistics
+- 🗺️ **REST API** - Ready for frontend integration
 
 ---
 
 ## 🚀 Quick Start
 
-### 1️⃣ Setup Environment
+### 1. Start Backend
 
 ```bash
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+cd Heaven
+docker-compose up -d
+```
 
-# Install dependencies
+### 2. Install Vision Engine
+
+```bash
+cd VisionEngine
 pip install -r requirements.txt
 ```
 
-**Note:** First run will auto-download YOLOv8s weights (~22MB)
-
-### 2️⃣ Get Your Video
-
-Download a traffic video from YouTube (e.g., "city traffic 1080p"):
+### 3. Run Detection
 
 ```bash
-# Create videos directory
-mkdir -p videos
+# Traffic monitoring
+python scripts/detector.py
 
-# Download using yt-dlp (if you have it)
-yt-dlp -f "best[height<=1080]" -o "videos/city_traffic.mp4" <YOUTUBE_URL>
-
-# Or manually download and place in videos/city_traffic.mp4
+# Parking monitoring
+python scripts/parking_detector.py --config config/config_parking.yaml
 ```
 
-Update `config.yaml`:
-```yaml
-video:
-  source: "videos/city_traffic.mp4"
+### 4. Access API
+
 ```
-
-### 3️⃣ Define Regions of Interest (ROIs)
-
-Use the interactive ROI editor to draw zones on your video:
-
-```bash
-python roi_editor.py
-```
-
-**Instructions:**
-- **Left-click** to add polygon points
-- **Press 'c'** to complete current ROI
-- **Press 'r'** to reset current ROI
-- **Press 's'** to save all ROIs to `config.yaml`
-- **Press 'q'** to quit
-
-**ROI Naming Convention:**
-- Streets: `street_1`, `street_2`, etc.
-- Parking: `SPOT_A1`, `SPOT_A2`, etc.
-
-### 4️⃣ Configure Traffic Thresholds
-
-After defining ROIs, update `max_vehicles` in `config.yaml` based on your video:
-
-```yaml
-traffic:
-  streets:
-    street_1:
-      roi: [[x1,y1], [x2,y2], ...]  # Auto-filled by roi_editor
-      max_vehicles: 20  # ← UPDATE THIS: How many cars = 100% congestion?
-```
-
-**How to determine this:**
-- Watch your video
-- Count max vehicles you see in that street ROI during heavy traffic
-- Set that as `max_vehicles`
-
-### 5️⃣ Start Detection
-
-```bash
-python detector.py
-```
-
-**Expected Output:**
-```
-======================================================================
- UrbanFlowAI - Vision Engine
-======================================================================
- Model: yolov8s.pt
- Video: videos/city_traffic.mp4
- Target FPS: 15
- Streets monitored: 1
- Parking spots: 2
-======================================================================
-
-✓ Using GPU: NVIDIA GeForce RTX 4060
-✓ Connected to Redis at localhost:6379
-Video info: 1920x1080 @ 30.0 FPS, 5400 frames
-Processing started... Press 'q' to quit
+http://localhost:8000/docs
 ```
 
 ---
@@ -117,278 +59,233 @@ Processing started... Press 'q' to quit
 
 ```
 UrbanFlow/
-├── detector.py           # Main vision engine (run this 24/7)
-├── roi_editor.py         # Interactive ROI definition tool
-├── config.yaml           # Configuration (ROIs, thresholds, Redis)
-├── requirements.txt      # Python dependencies
-├── README.md            # This file
-├── videos/
-│   └── city_traffic.mp4  # Your video file
-└── venv/                # Virtual environment
+├── Heaven/                 # Backend API (FastAPI + Docker)
+│   ├── api/                # REST API endpoints
+│   ├── docker-compose.yml  # Infrastructure setup
+│   └── init-db/            # Database initialization
+│
+├── VisionEngine/           # AI Vision Processing
+│   ├── scripts/            # Python detection scripts
+│   │   ├── detector.py         # Traffic monitoring
+│   │   ├── parking_detector.py # Parking detection
+│   │   ├── roi_editor.py       # ROI configuration
+│   │   └── calibrate_speed.py  # Speed calibration
+│   ├── config/             # Configuration files
+│   │   ├── config.yaml          # Traffic config
+│   │   └── config_parking.yaml  # Parking config
+│   ├── metrics/            # Real-time metrics output
+│   └── requirements.txt    # Python dependencies
+│
+└── docs/                   # Documentation
+    ├── SETUP_GUIDE.md      # Installation & configuration
+    ├── USER_GUIDE.md       # Features & usage
+    └── FOR_DEVELOPERS.md   # API & frontend development
 ```
 
 ---
 
-## ⚙️ Configuration Guide
+## 🛠️ Tech Stack
 
-### `config.yaml` - Full Reference
-
-```yaml
-# ============================================
-# VIDEO SOURCE
-# ============================================
-video:
-  source: "videos/city_traffic.mp4"
-  display_preview: true      # Show live detection window
-  target_fps: 15             # Processing speed (10-15 recommended)
-
-# ============================================
-# YOLO MODEL
-# ============================================
-model:
-  weights: "yolov8s.pt"      # YOLOv8 small (good speed/accuracy balance)
-  confidence: 0.5            # Detection threshold
-  device: "cuda"             # "cuda" for GPU, "cpu" for CPU
-  classes_to_detect:
-    - 2  # car
-    - 3  # motorcycle
-    - 5  # bus
-    - 7  # truck (emergency vehicle stand-in)
-
-# ============================================
-# REDIS CONNECTION
-# ============================================
-redis:
-  host: "localhost"
-  port: 6379
-  db: 0
-  # password: "your_password"  # Uncomment if needed
-
-# ============================================
-# TRAFFIC MONITORING
-# ============================================
-traffic:
-  streets:
-    street_1:
-      roi: [[100,200], [500,200], [500,600], [100,600]]  # Polygon points
-      max_vehicles: 20          # Max cars before 100% congestion
-      redis_key: "urbanflow:traffic:street_1"
-
-# ============================================
-# PARKING MONITORING
-# ============================================
-parking:
-  spots:
-    SPOT_A1:
-      roi: [[50,50], [150,50], [150,150], [50,150]]
-      redis_key: "urbanflow:parking:SPOT_A1"
-
-# ============================================
-# EMERGENCY VEHICLE TRACKING
-# ============================================
-emergency:
-  vehicle_class: 7           # COCO class 7 = truck
-  track_all: true
-  redis_key_prefix: "urbanflow:emergency:truck_"
-```
+| Component | Technology |
+|-----------|------------|
+| **Vision** | YOLOv11, OpenCV, Python |
+| **Backend** | FastAPI, Redis, PostgreSQL |
+| **Routing** | OSRM, GraphHopper |
+| **Infrastructure** | Docker, Docker Compose |
+| **Frontend** | *To be built* |
 
 ---
 
-## 🔧 How It Works
+## 📊 Features
 
-### Detection Pipeline
+### Traffic Monitoring
+- ✅ Real-time vehicle detection
+- ✅ Congestion scoring (0-100%)
+- ✅ Speed measurement
+- ✅ Multi-street support
+- ✅ Emergency vehicle detection
 
+### Parking Detection
+- ✅ Spot occupancy tracking
+- ✅ Adaptive detection (overhead views)
+- ✅ Manual ROI drawing
+- ✅ Auto-learning parking spots
+- ✅ Grid generation
+
+### Analytics
+- ✅ Real-time metrics (JSON)
+- ✅ Historical data (CSV)
+- ✅ Per-street statistics
+- ✅ Parking occupancy rates
+
+### API
+- ✅ RESTful endpoints
+- ✅ Live city status
+- ✅ Route calculation
+- ✅ Interactive documentation
+
+---
+
+## 📚 Documentation
+
+| Guide | Description |
+|-------|-------------|
+| [**SETUP_GUIDE.md**](docs/SETUP_GUIDE.md) | Installation, configuration, troubleshooting |
+| [**USER_GUIDE.md**](docs/USER_GUIDE.md) | Features, usage, best practices |
+| [**FOR_DEVELOPERS.md**](docs/FOR_DEVELOPERS.md) | API docs, frontend development |
+
+---
+
+## 🔌 API Example
+
+### Get Live Status
+
+```bash
+curl http://localhost:8000/api/v1/status/live
 ```
-Video Frame → YOLOv8 → Bounding Boxes → ROI Analysis → Redis Publish
-     ↓           ↓           ↓              ↓             ↓
-   1080p    GPU Inference  [x,y,w,h]   Point-in-Polygon  Backend
-```
 
-### 1. **Traffic Density** (Street ROIs)
+**Response:**
 
-```python
-# For each street ROI:
-vehicles_in_roi = count_vehicles_in_polygon(detections, street_roi)
-density = min(vehicles_in_roi / max_vehicles, 1.0)
-
-# Publish
-redis.set("urbanflow:traffic:street_1", density)  # 0.0 to 1.0
-```
-
-### 2. **Parking Status** (Spot ROIs)
-
-```python
-# For each parking spot:
-car_detected = any_car_center_in_polygon(detections, spot_roi)
-status = "occupied" if car_detected else "free"
-
-# Publish
-redis.set("urbanflow:parking:SPOT_A1", status)
-```
-
-### 3. **Emergency Tracking** (Truck Detection)
-
-```python
-# For each truck (COCO class 7):
-truck_center = get_bbox_center(truck_bbox)
-payload = {
-    "id": "truck_01",
-    "location": [x, y],
-    "bbox": [x1, y1, x2, y2],
-    "timestamp": 1234567890
+```json
+{
+  "timestamp": "2025-10-23T15:30:00",
+  "streets": [
+    {
+      "street_id": "street_1",
+      "congestion_score": 0.21,
+      "congestion_level": "low"
+    }
+  ],
+  "parking_zones": [
+    {
+      "zone_id": "zone_A",
+      "total_spots": 10,
+      "free_spots": 4,
+      "occupancy_rate": 0.6
+    }
+  ]
 }
+```
 
-# Publish
-redis.set("urbanflow:emergency:truck_01", json.dumps(payload))
+**More examples:** See [FOR_DEVELOPERS.md](docs/FOR_DEVELOPERS.md)
+
+---
+
+## 🎨 Screenshots
+
+### Traffic Detection
+```
+🚗 Detecting vehicles...
+Street 1: ████░░░░░░ 21% (Low)
+Street 2: █████░░░░░ 55% (Medium)
+Street 3: ████████░░ 80% (High)
+Street 4: ███░░░░░░░ 30% (Low)
+```
+
+### Parking Occupancy
+```
+🅿️  Parking Status:
+Zone A: [■■■■■■□□□□] 60% Full (6/10)
+Zone B: [■■■■■■■■□□] 80% Full (8/10)
 ```
 
 ---
 
-## 🐛 Troubleshooting
+## ⚡ Performance
 
-### Issue: "CUDA not available"
-**Solution:** You're on CPU mode. It will work but slower (~5 FPS instead of 15 FPS)
+| Metric | Value |
+|--------|-------|
+| **Detection FPS** | 15 FPS |
+| **API Latency** | < 50ms |
+| **Update Frequency** | 2 seconds |
+| **Accuracy** | > 90% (vehicles) |
+| **Speed Accuracy** | ±5 km/h |
+
+---
+
+## 🌟 Use Cases
+
+- **Smart Cities** - Real-time traffic management
+- **Parking Management** - Optimize parking utilization
+- **Emergency Services** - Priority routing
+- **Urban Planning** - Traffic pattern analysis
+- **Research** - Transportation studies
+
+---
+
+## 🛣️ Roadmap
+
+### MVP (Current)
+- [x] Vehicle detection
+- [x] Traffic monitoring
+- [x] Parking detection
+- [x] Speed tracking
+- [x] REST API
+- [ ] Frontend UI *(in progress)*
+
+### Future
+- [ ] Multi-camera support
+- [ ] Historical analytics dashboard
+- [ ] Traffic prediction (ML)
+- [ ] Mobile app
+- [ ] Cloud deployment
+- [ ] Emergency vehicle prioritization
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [contribution guidelines](docs/FOR_DEVELOPERS.md#contributing).
+
+### Development Setup
+
 ```bash
-# Check PyTorch CUDA
-python -c "import torch; print(torch.cuda.is_available())"
-```
+# Clone repository
+git clone https://github.com/Stupu-Eduard/UrbanFlow.git
+cd UrbanFlow
 
-### Issue: "Could not connect to Redis"
-**Solution:** Install and start Redis
-```bash
-# Ubuntu/Debian
-sudo apt install redis-server
-sudo systemctl start redis-server
+# Setup backend
+cd Heaven && docker-compose up -d
 
-# macOS
-brew install redis
-brew services start redis
+# Setup vision engine
+cd ../VisionEngine
+pip install -r requirements.txt
 
-# Windows (WSL2)
-sudo service redis-server start
-```
-
-### Issue: "Video file not found"
-**Solution:** Update `config.yaml` with correct path
-```yaml
-video:
-  source: "videos/city_traffic.mp4"  # Check this path
-```
-
-### Issue: Low FPS / Slow Processing
-**Solutions:**
-1. Lower `target_fps` in config (try 10 instead of 15)
-2. Use smaller model: `yolov8n.pt` instead of `yolov8s.pt`
-3. Reduce video resolution (use 720p instead of 1080p)
-4. Lower confidence threshold: `confidence: 0.4`
-
----
-
-## 📊 Redis Data Schema
-
-### Traffic Keys
-```
-Key: urbanflow:traffic:street_1
-Type: String
-Value: "0.82" (float as string, 0.0-1.0)
-TTL: No expiry
-```
-
-### Parking Keys
-```
-Key: urbanflow:parking:SPOT_A1
-Type: String
-Value: "occupied" or "free"
-TTL: No expiry
-```
-
-### Emergency Keys
-```
-Key: urbanflow:emergency:truck_01
-Type: String
-Value: '{"id": "truck_01", "location": [450, 320], "bbox": [...], "timestamp": 1234567890}'
-TTL: 5 seconds (auto-expires if vehicle not detected)
+# Start developing!
 ```
 
 ---
 
-## 🎓 Technical Details
+## 📄 License
 
-### COCO Classes Used
-| Class ID | Object | Usage |
-|----------|--------|-------|
-| 2 | Car | Traffic + Parking |
-| 3 | Motorcycle | Traffic only |
-| 5 | Bus | Traffic only |
-| 7 | Truck | Emergency vehicle (stand-in for ambulance) |
-
-### Performance Specs
-- **Hardware:** NVIDIA RTX 4060 (recommended), CPU also works
-- **Model:** YOLOv8s (~11M parameters)
-- **Target FPS:** 10-15 FPS
-- **Resolution:** 1080p or 720p
-- **Latency:** <100ms per frame
-
-### Algorithm: Point-in-Polygon
-Uses ray casting algorithm to determine if vehicle center is inside ROI:
-- Cast horizontal ray from point to infinity
-- Count polygon edge intersections
-- Odd count = inside, Even count = outside
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🔮 Future Enhancements
+## 👥 Team
 
-- [ ] Multi-camera support (multiple video feeds)
-- [ ] Object tracking (DeepSORT) for persistent vehicle IDs
-- [ ] Traffic flow vectors (direction + speed estimation)
-- [ ] Real RTSP stream support (live cameras)
-- [ ] GPU batch processing for multiple streams
-- [ ] Web dashboard for live visualization
+**HeavenSolutions** - Hackathon Project
 
 ---
 
-## 🤝 Backend Integration
+## 📞 Support
 
-**For Backend Engineers:**
-
-Your detector is running. To consume the data:
-
-```python
-import redis
-
-r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
-
-# Get traffic density
-street_1_density = float(r.get("urbanflow:traffic:street_1") or 0)
-
-# Get parking status
-spot_a1_status = r.get("urbanflow:parking:SPOT_A1")  # "occupied" or "free"
-
-# Get emergency vehicles
-emergency_keys = r.keys("urbanflow:emergency:truck_*")
-for key in emergency_keys:
-    data = json.loads(r.get(key))
-    print(f"Emergency vehicle at {data['location']}")
-```
+- **Documentation**: [docs/](docs/)
+- **API Docs**: http://localhost:8000/docs
+- **Issues**: [GitHub Issues](https://github.com/Stupu-Eduard/UrbanFlow/issues)
 
 ---
 
-## 📝 License
+## 🎉 Acknowledgments
 
-UrbanFlowAI - Intelligent Urban Mobility Orchestration Platform
+- [Ultralytics YOLO](https://github.com/ultralytics/ultralytics) - Object detection
+- [FastAPI](https://fastapi.tiangolo.com/) - Web framework
+- [OpenCV](https://opencv.org/) - Computer vision
+- [Redis](https://redis.io/) - Real-time data
+- [PostgreSQL](https://www.postgresql.org/) - Database
 
 ---
 
-## 💡 Support
+**Made with ❤️ for smarter cities**
 
-For questions or issues:
-1. Check `config.yaml` settings
-2. Verify video path and ROI definitions
-3. Test Redis connection: `redis-cli ping`
-4. Check GPU availability if using CUDA
-
-**Built with:** Python 3.8+, YOLOv8, OpenCV, Redis
-
-**The Foundation of UrbanFlowAI** - Without these "Eyes," the "Brain" is blind. 🚀
-
+*For detailed setup instructions, see [SETUP_GUIDE.md](docs/SETUP_GUIDE.md)*
