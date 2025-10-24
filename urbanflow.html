@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UrbanFlowAI - Smart City Navigation</title>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            background: #000; color: #fff; overflow: hidden; 
+        }
+        #map { width: 100%; height: 100vh; }
+        
+        /* Header */
+        .header {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+            background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(20px);
+            padding: 12px 24px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        .header h1 { font-size: 20px; font-weight: 700; }
+        
+        /* Search */
+        .search-container {
+            position: absolute; top: 80px; left: 20px; right: 20px; z-index: 10;
+        }
+        .search-box {
+            width: 100%; padding: 16px 20px; background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(20px); border: 2px solid #333; border-radius: 16px;
+            color: white; font-size: 16px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
+        .search-box:focus { outline: none; border-color: #007AFF; }
+        .search-box::placeholder { color: #8E8E93; }
+        
+        .search-results {
+            background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(20px);
+            border-radius: 12px; margin-top: 8px; max-height: 300px; overflow-y: auto;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); display: none;
+        }
+        .search-results.active { display: block; }
+        .search-result-item {
+            padding: 16px 20px; border-bottom: 1px solid #333; cursor: pointer;
+            transition: background 0.2s;
+        }
+        .search-result-item:hover { background: #1C1C1E; }
+        .search-result-item:last-child { border-bottom: none; }
+        .search-result-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+        .search-result-address { font-size: 14px; color: #8E8E93; }
+        
+        /* Control Buttons */
+        .control-buttons {
+            position: absolute; bottom: 450px; right: 20px; z-index: 10;
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .control-btn {
+            width: 48px; height: 48px; background: rgba(0, 0, 0, 0.95); border: 2px solid #333;
+            border-radius: 50%; color: white; font-size: 24px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); transition: all 0.2s;
+        }
+        .control-btn:hover { background: #1C1C1E; transform: scale(1.05); }
+        .control-btn.active { background: #007AFF; border-color: #007AFF; }
+        
+        /* Bottom Panel */
+        .bottom-panel {
+            position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
+            background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(20px);
+            border-top-left-radius: 24px; border-top-right-radius: 24px;
+            padding: 24px; max-height: 400px; overflow-y: auto;
+            box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.6);
+        }
+        
+        .panel-handle {
+            width: 40px; height: 5px; background: #333; border-radius: 3px;
+            margin: 0 auto 20px; cursor: grab;
+        }
+        
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;
+        }
+        .stat-card {
+            background: #1C1C1E; padding: 16px; border-radius: 12px;
+            border: 1px solid #333;
+        }
+        .stat-value { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+        .stat-label { font-size: 12px; color: #8E8E93; text-transform: uppercase; }
+        
+        .traffic-low { color: #10b981; }
+        .traffic-medium { color: #f59e0b; }
+        .traffic-high { color: #ef4444; }
+        .traffic-critical { color: #dc2626; }
+        
+        .section-title {
+            font-size: 18px; font-weight: 700; margin: 20px 0 12px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        
+        .parking-list { display: flex; flex-direction: column; gap: 12px; }
+        .parking-card {
+            background: #1C1C1E; padding: 16px; border-radius: 12px;
+            border: 1px solid #333; cursor: pointer; transition: all 0.2s;
+        }
+        .parking-card:hover { background: #2C2C2E; }
+        .parking-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+        }
+        .parking-name { font-size: 16px; font-weight: 600; }
+        .parking-spots { font-size: 14px; color: #8E8E93; }
+        .parking-occupancy {
+            height: 6px; background: #333; border-radius: 3px; overflow: hidden;
+            margin-top: 8px;
+        }
+        .parking-occupancy-fill {
+            height: 100%; transition: width 0.3s;
+        }
+        
+        /* Navigation Panel */
+        .nav-panel {
+            position: absolute; bottom: 0; left: 0; right: 0; z-index: 15;
+            background: rgba(0, 0, 0, 0.98); backdrop-filter: blur(20px);
+            border-top-left-radius: 24px; border-top-right-radius: 24px;
+            padding: 24px; display: none;
+            box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.8);
+        }
+        .nav-panel.active { display: block; }
+        
+        .nav-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+        }
+        .nav-close { 
+            width: 36px; height: 36px; background: #ef4444; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; cursor: pointer;
+        }
+        
+        .route-stats {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;
+        }
+        .route-stat {
+            background: #1C1C1E; padding: 12px; border-radius: 12px; text-align: center;
+        }
+        .route-stat-value { font-size: 20px; font-weight: 700; }
+        .route-stat-label { font-size: 12px; color: #8E8E93; margin-top: 4px; }
+        
+        .current-instruction {
+            background: #007AFF; padding: 16px; border-radius: 12px; margin-bottom: 16px;
+            font-size: 16px; font-weight: 600;
+        }
+        
+        .instruction-list { max-height: 200px; overflow-y: auto; }
+        .instruction-item {
+            padding: 12px; background: #1C1C1E; border-radius: 8px;
+            margin-bottom: 8px; font-size: 14px;
+        }
+        
+        /* Status Bar */
+        .status-bar {
+            position: absolute; top: 160px; left: 50%; transform: translateX(-50%); z-index: 10;
+            background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(20px);
+            padding: 12px 20px; border-radius: 24px; font-size: 14px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); display: none;
+        }
+        .status-bar.active { display: block; }
+        
+        /* Markers */
+        .user-marker {
+            font-size: 32px; filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.8));
+        }
+        .destination-marker {
+            width: 40px; height: 40px; background: #ef4444; border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg); border: 3px solid white;
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.6);
+        }
+        .parking-marker {
+            background: white; width: 32px; height: 32px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+        .parking-marker.available { background: #10b981; color: white; }
+        .parking-marker.limited { background: #f59e0b; color: white; }
+        .parking-marker.full { background: #ef4444; color: white; }
+        
+        /* Live Indicator */
+        .live-indicator {
+            position: absolute; top: 160px; right: 20px; z-index: 10;
+            background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(20px);
+            padding: 8px 16px; border-radius: 20px; font-size: 12px;
+            display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
+        .live-dot {
+            width: 8px; height: 8px; background: #10b981; border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <!-- Header -->
+    <div class="header">
+        <h1>🚗 UrbanFlowAI</h1>
+    </div>
+    
+    <!-- Search -->
+    <div class="search-container">
+        <input 
+            type="text" 
+            class="search-box" 
+            id="search-box" 
+            placeholder="🔍 Search for a street, address, or place..."
+            autocomplete="off"
+        />
+        <div class="search-results" id="search-results"></div>
+    </div>
+    
+    <!-- Status Bar -->
+    <div class="status-bar" id="status-bar">Ready</div>
+    
+    <!-- Live Indicator -->
+    <div class="live-indicator">
+        <div class="live-dot"></div>
+        <span id="live-time">Live</span>
+    </div>
+    
+    <!-- Control Buttons -->
+    <div class="control-buttons">
+        <button class="control-btn" onclick="centerOnUser()" title="Center on my location">📍</button>
+        <button class="control-btn" id="traffic-toggle" onclick="toggleTraffic()" title="Toggle traffic heat map">🚦</button>
+        <button class="control-btn" id="parking-toggle" onclick="toggleParking()" title="Toggle parking markers">🅿️</button>
+        <button class="control-btn" onclick="clearRoute()" title="Clear navigation">🗑️</button>
+    </div>
+    
+    <!-- Bottom Panel (Traffic & Parking Overview) -->
+    <div class="bottom-panel" id="bottom-panel">
+        <div class="panel-handle"></div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="avg-congestion">--</div>
+                <div class="stat-label">Avg Congestion</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="free-spots">--</div>
+                <div class="stat-label">Free Spots</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="total-spots">--</div>
+                <div class="stat-label">Total Spots</div>
+            </div>
+        </div>
+        
+        <div class="section-title">🅿️ Nearby Parking</div>
+        <div class="parking-list" id="parking-list">
+            <div style="color: #8E8E93; text-align: center; padding: 20px;">
+                Loading parking data...
+            </div>
+        </div>
+    </div>
+    
+    <!-- Navigation Panel -->
+    <div class="nav-panel" id="nav-panel">
+        <div class="nav-header">
+            <h2>🧭 Navigation Active</h2>
+            <div class="nav-close" onclick="clearRoute()">✕</div>
+        </div>
+        
+        <div class="route-stats">
+            <div class="route-stat">
+                <div class="route-stat-value" id="nav-eta">--</div>
+                <div class="route-stat-label">ETA</div>
+            </div>
+            <div class="route-stat">
+                <div class="route-stat-value" id="nav-distance">--</div>
+                <div class="route-stat-label">Distance</div>
+            </div>
+            <div class="route-stat">
+                <div class="route-stat-value" id="nav-traffic">--</div>
+                <div class="route-stat-label">Traffic</div>
+            </div>
+        </div>
+        
+        <div class="current-instruction" id="current-instruction">
+            Follow the route...
+        </div>
+        
+        <div class="instruction-list" id="instruction-list"></div>
+    </div>
+
+    <script>
+        // Initialize Mapbox
+        mapboxgl.accessToken = 'pk.eyJ1IjoibmVndXJhdGVvZG9yciIsImEiOiJjbWgzaTJkcTAxNXkyZDNzYjlzbjg1andvIn0.J5GHR2HYPA3GxYuoS_xclA';
+        
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/dark-v11',
+            center: [-73.9762, 40.7589],
+            zoom: 13
+        });
+
+        // State
+        let userLocation = null;
+        let destinationLocation = null;
+        let userMarker = null;
+        let destinationMarker = null;
+        let routeData = null;
+        let liveData = null;
+        let parkingMarkers = [];
+        let showTraffic = true;
+        let showParking = true;
+        let updateInterval = null;
+
+        // API Config
+        const API_BASE = 'http://localhost:8000/api/v1';
+
+        // Initialize
+        map.on('load', () => {
+            console.log('✅ Map loaded');
+            getUserLocation();
+            fetchLiveData();
+            startLiveUpdates();
+            
+            // Add traffic heat map layer (initially hidden)
+            map.addSource('traffic-heat', {
+                type: 'geojson',
+                data: { type: 'FeatureCollection', features: [] }
+            });
+            
+            map.addLayer({
+                id: 'traffic-heat-layer',
+                type: 'line',
+                source: 'traffic-heat',
+                paint: {
+                    'line-color': ['get', 'color'],
+                    'line-width': 6,
+                    'line-opacity': 0.8
+                }
+            });
+            
+            // Add route layer
+            map.addSource('route', {
+                type: 'geojson',
+                data: { type: 'FeatureCollection', features: [] }
+            });
+            
+            map.addLayer({
+                id: 'route-layer',
+                type: 'line',
+                source: 'route',
+                paint: {
+                    'line-color': '#007AFF',
+                    'line-width': 6,
+                    'line-opacity': 0.8
+                }
+            });
+        });
+
+        // Get User Location
+        function getUserLocation() {
+            if (!navigator.geolocation) {
+                updateStatus('❌ Geolocation not supported', 'error');
+                return;
+            }
+
+            updateStatus('📍 Getting your location...', 'info');
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    userLocation = {
+                        lng: position.coords.longitude,
+                        lat: position.coords.latitude
+                    };
+                    updateUserMarker();
+                    map.flyTo({ center: [userLocation.lng, userLocation.lat], zoom: 15, duration: 2000 });
+                    updateStatus('✅ Location acquired', 'success');
+                    
+                    // Watch position
+                    navigator.geolocation.watchPosition(
+                        (pos) => {
+                            userLocation = { lng: pos.coords.longitude, lat: pos.coords.latitude };
+                            updateUserMarker();
+                        },
+                        null,
+                        { enableHighAccuracy: true, maximumAge: 0 }
+                    );
+                },
+                (error) => {
+                    console.error('Location error:', error);
+                    updateStatus('⚠️ Using default location', 'error');
+                    // Use default location
+                    userLocation = { lng: -73.9762, lat: 40.7589 };
+                    updateUserMarker();
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
+        function updateUserMarker() {
+            if (!userLocation) return;
+
+            if (userMarker) {
+                userMarker.setLngLat([userLocation.lng, userLocation.lat]);
+            } else {
+                const el = document.createElement('div');
+                el.className = 'user-marker';
+                el.textContent = '🚗';
+                userMarker = new mapboxgl.Marker(el)
+                    .setLngLat([userLocation.lng, userLocation.lat])
+                    .addTo(map);
+            }
+        }
+
+        function centerOnUser() {
+            if (userLocation) {
+                map.flyTo({ center: [userLocation.lng, userLocation.lat], zoom: 15, duration: 1000 });
+            } else {
+                getUserLocation();
+            }
+        }
+
+        // Address Search
+        const searchBox = document.getElementById('search-box');
+        const searchResults = document.getElementById('search-results');
+        let searchTimeout = null;
+
+        searchBox.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            
+            if (query.length < 3) {
+                searchResults.classList.remove('active');
+                return;
+            }
+
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => searchAddress(query), 300);
+        });
+
+        async function searchAddress(query) {
+            try {
+                const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxgl.accessToken}&limit=5`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.features && data.features.length > 0) {
+                    displaySearchResults(data.features);
+                } else {
+                    searchResults.innerHTML = '<div style="padding: 16px; color: #8E8E93; text-align: center;">No results found</div>';
+                    searchResults.classList.add('active');
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                searchResults.innerHTML = '<div style="padding: 16px; color: #ef4444; text-align: center;">Search failed</div>';
+                searchResults.classList.add('active');
+            }
+        }
+
+        function displaySearchResults(features) {
+            const html = features.map(feature => {
+                const name = feature.text;
+                const address = feature.place_name;
+                return `
+                    <div class="search-result-item" onclick='selectSearchResult(${JSON.stringify(feature.center)}, "${name.replace(/'/g, "\\'")}");'>
+                        <div class="search-result-name">${name}</div>
+                        <div class="search-result-address">${address}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            searchResults.innerHTML = html;
+            searchResults.classList.add('active');
+        }
+
+        function selectSearchResult(center, name) {
+            const [lng, lat] = center;
+            destinationLocation = { lng, lat };
+            
+            searchBox.value = name;
+            searchResults.classList.remove('active');
+            
+            if (destinationMarker) destinationMarker.remove();
+            
+            const el = document.createElement('div');
+            el.className = 'destination-marker';
+            destinationMarker = new mapboxgl.Marker(el)
+                .setLngLat([lng, lat])
+                .addTo(map);
+
+            map.flyTo({ center: [lng, lat], zoom: 15, duration: 1000 });
+            
+            if (userLocation) {
+                updateStatus('🔄 Calculating route...', 'info');
+                calculateRoute();
+            } else {
+                updateStatus('⚠️ Waiting for your location...', 'info');
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-container')) {
+                searchResults.classList.remove('active');
+            }
+        });
+
+        // Click on map to set destination
+        map.on('click', (e) => {
+            if (!userLocation) {
+                updateStatus('⚠️ Please wait for your location first', 'error');
+                return;
+            }
+
+            destinationLocation = { lng: e.lngLat.lng, lat: e.lngLat.lat };
+            
+            searchBox.value = '';
+            searchResults.classList.remove('active');
+
+            if (destinationMarker) destinationMarker.remove();
+            
+            const el = document.createElement('div');
+            el.className = 'destination-marker';
+            destinationMarker = new mapboxgl.Marker(el)
+                .setLngLat([destinationLocation.lng, destinationLocation.lat])
+                .addTo(map);
+
+            updateStatus('🔄 Calculating route...', 'info');
+            calculateRoute();
+        });
+
+        // Calculate Route
+        async function calculateRoute() {
+            if (!userLocation || !destinationLocation) return;
+
+            try {
+                // Try backend first
+                const response = await fetch(`${API_BASE}/route/calculate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        start_coords: [userLocation.lng, userLocation.lat],
+                        end_coords: [destinationLocation.lng, destinationLocation.lat]
+                    })
+                });
+
+                if (response.ok) {
+                    routeData = await response.json();
+                    displayRoute();
+                    updateStatus('✅ Route calculated', 'success');
+                } else {
+                    throw new Error('Backend failed');
+                }
+            } catch (error) {
+                console.log('Backend failed, using Mapbox Directions...');
+                
+                // Fallback to Mapbox Directions API
+                const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.lng},${userLocation.lat};${destinationLocation.lng},${destinationLocation.lat}?geometries=geojson&steps=true&access_token=${mapboxgl.accessToken}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.routes && data.routes.length > 0) {
+                    const route = data.routes[0];
+                    routeData = {
+                        geometry: route.geometry.coordinates,
+                        duration_seconds: route.duration,
+                        distance_meters: route.distance,
+                        traffic_impact: 'medium',
+                        instructions: route.legs[0].steps.map(step => ({
+                            text: step.maneuver.instruction,
+                            point: step.maneuver.location
+                        }))
+                    };
+                    displayRoute();
+                    updateStatus('✅ Route calculated', 'success');
+                }
+            }
+        }
+
+        function displayRoute() {
+            if (!routeData) return;
+
+            // Draw route on map
+            map.getSource('route').setData({
+                type: 'FeatureCollection',
+                features: [{
+                    type: 'Feature',
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: routeData.geometry
+                    }
+                }]
+            });
+
+            // Fit map to route
+            const bounds = routeData.geometry.reduce((bounds, coord) => {
+                return bounds.extend(coord);
+            }, new mapboxgl.LngLatBounds(routeData.geometry[0], routeData.geometry[0]));
+            
+            map.fitBounds(bounds, { padding: 100, duration: 1000 });
+
+            // Show navigation panel
+            document.getElementById('bottom-panel').style.display = 'none';
+            document.getElementById('nav-panel').classList.add('active');
+
+            // Update navigation stats
+            document.getElementById('nav-eta').textContent = formatDuration(routeData.duration_seconds);
+            document.getElementById('nav-distance').textContent = formatDistance(routeData.distance_meters);
+            document.getElementById('nav-traffic').textContent = routeData.traffic_impact;
+
+            // Display instructions
+            if (routeData.instructions && routeData.instructions.length > 0) {
+                document.getElementById('current-instruction').textContent = routeData.instructions[0].text;
+                
+                document.getElementById('instruction-list').innerHTML = routeData.instructions.map((inst, i) => 
+                    `<div class="instruction-item">${i + 1}. ${inst.text}</div>`
+                ).join('');
+            }
+        }
+
+        function clearRoute() {
+            routeData = null;
+            
+            map.getSource('route').setData({
+                type: 'FeatureCollection',
+                features: []
+            });
+
+            if (destinationMarker) {
+                destinationMarker.remove();
+                destinationMarker = null;
+            }
+
+            destinationLocation = null;
+            searchBox.value = '';
+
+            document.getElementById('nav-panel').classList.remove('active');
+            document.getElementById('bottom-panel').style.display = 'block';
+
+            updateStatus('✅ Navigation cleared', 'success');
+        }
+
+        // Fetch Live Data
+        async function fetchLiveData() {
+            try {
+                const response = await fetch(`${API_BASE}/status/live`);
+                liveData = await response.json();
+                
+                console.log('✅ Live data fetched:', liveData);
+                updateLiveUI();
+                
+                document.getElementById('live-time').textContent = 
+                    new Date(liveData.timestamp).toLocaleTimeString();
+            } catch (error) {
+                console.error('Failed to fetch live data:', error);
+            }
+        }
+
+        function startLiveUpdates() {
+            updateInterval = setInterval(fetchLiveData, 2000);
+        }
+
+        function updateLiveUI() {
+            if (!liveData) return;
+
+            // Update stats
+            document.getElementById('avg-congestion').textContent = 
+                Math.round(liveData.average_congestion) + '%';
+            document.getElementById('avg-congestion').className = 
+                'stat-value traffic-' + getCongestionLevel(liveData.average_congestion);
+            
+            document.getElementById('free-spots').textContent = liveData.total_free_spots;
+            document.getElementById('total-spots').textContent = liveData.total_parking_spots;
+
+            // Update traffic heat map
+            if (showTraffic && liveData.streets) {
+                const features = liveData.streets.map(street => ({
+                    type: 'Feature',
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: street.coordinates
+                    },
+                    properties: {
+                        color: getCongestionColor(street.congestion_score)
+                    }
+                }));
+                
+                map.getSource('traffic-heat').setData({
+                    type: 'FeatureCollection',
+                    features: features
+                });
+            }
+
+            // Update parking markers
+            if (showParking && liveData.parking_zones) {
+                // Clear old markers
+                parkingMarkers.forEach(m => m.remove());
+                parkingMarkers = [];
+
+                // Add new markers
+                liveData.parking_zones.forEach(zone => {
+                    const el = document.createElement('div');
+                    el.className = 'parking-marker';
+                    el.textContent = zone.free_spots;
+                    
+                    if (zone.free_spots === 0) el.classList.add('full');
+                    else if (zone.free_spots < 3) el.classList.add('limited');
+                    else el.classList.add('available');
+
+                    const marker = new mapboxgl.Marker(el)
+                        .setLngLat([zone.longitude, zone.latitude])
+                        .addTo(map);
+                    
+                    parkingMarkers.push(marker);
+                });
+
+                // Update parking list
+                updateParkingList();
+            }
+        }
+
+        function updateParkingList() {
+            if (!liveData || !liveData.parking_zones) return;
+
+            const html = liveData.parking_zones.map(zone => {
+                const occupancyRate = zone.occupancy_rate * 100;
+                const color = zone.free_spots === 0 ? '#ef4444' : 
+                             zone.free_spots < 3 ? '#f59e0b' : '#10b981';
+                
+                return `
+                    <div class="parking-card" onclick='flyToParking(${zone.longitude}, ${zone.latitude});'>
+                        <div class="parking-header">
+                            <div class="parking-name">🅿️ ${zone.zone_name}</div>
+                            <div class="parking-spots">${zone.free_spots} / ${zone.total_spots} free</div>
+                        </div>
+                        <div class="parking-occupancy">
+                            <div class="parking-occupancy-fill" style="width: ${occupancyRate}%; background: ${color};"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('parking-list').innerHTML = html;
+        }
+
+        function flyToParking(lng, lat) {
+            map.flyTo({ center: [lng, lat], zoom: 17, duration: 1000 });
+        }
+
+        // Toggle Traffic/Parking
+        function toggleTraffic() {
+            showTraffic = !showTraffic;
+            map.setLayoutProperty('traffic-heat-layer', 'visibility', showTraffic ? 'visible' : 'none');
+            document.getElementById('traffic-toggle').classList.toggle('active');
+        }
+
+        function toggleParking() {
+            showParking = !showParking;
+            parkingMarkers.forEach(m => m.getElement().style.display = showParking ? 'flex' : 'none');
+            document.getElementById('parking-toggle').classList.toggle('active');
+        }
+
+        // Utility Functions
+        function getCongestionLevel(score) {
+            if (score < 30) return 'low';
+            if (score < 60) return 'medium';
+            if (score < 80) return 'high';
+            return 'critical';
+        }
+
+        function getCongestionColor(score) {
+            if (score < 30) return '#10b981';
+            if (score < 60) return '#f59e0b';
+            if (score < 80) return '#ef4444';
+            return '#dc2626';
+        }
+
+        function formatDuration(seconds) {
+            if (seconds < 60) return `${seconds}s`;
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes} min`;
+            const hours = Math.floor(minutes / 60);
+            const remainingMinutes = minutes % 60;
+            return `${hours}h ${remainingMinutes}min`;
+        }
+
+        function formatDistance(meters) {
+            if (meters < 1000) return `${Math.round(meters)} m`;
+            return `${(meters / 1000).toFixed(1)} km`;
+        }
+
+        function updateStatus(message, type) {
+            const statusBar = document.getElementById('status-bar');
+            statusBar.textContent = message;
+            statusBar.className = 'status-bar active';
+            
+            setTimeout(() => {
+                statusBar.classList.remove('active');
+            }, 3000);
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (updateInterval) clearInterval(updateInterval);
+        });
+    </script>
+</body>
+</html>
+
+
+
+

@@ -1,0 +1,29 @@
+rootProject.name = 'UrbanFlowApp'
+
+// Mapbox configuration
+def mapboxDownloadsToken = providers.gradleProperty("MAPBOX_DOWNLOADS_TOKEN").orNull
+if (mapboxDownloadsToken == null) {
+    mapboxDownloadsToken = ""
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        mavenCentral()
+        maven {
+            url 'https://api.mapbox.com/downloads/v2/releases/maven'
+            authentication {
+                basic(BasicAuthentication)
+            }
+            credentials {
+                username = 'mapbox'
+                password = mapboxDownloadsToken
+            }
+        }
+    }
+}
+
+apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
+include ':app'
+includeBuild('../node_modules/@react-native/gradle-plugin')
